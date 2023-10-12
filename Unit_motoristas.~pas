@@ -1,0 +1,145 @@
+unit Unit_motoristas;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, DB, ADODB, StdCtrls, Buttons, Grids, DBGrids;
+
+type
+  TForm_motoristas = class(TForm)
+    btm_fechar: TBitBtn;
+    adoquery_motoristas: TADOQuery;
+    dbgrid_motoristas: TDBGrid;
+    ds_motoristas: TDataSource;
+    Label1: TLabel;
+    Label2: TLabel;
+    edt_num: TEdit;
+    edt_nome: TEdit;
+    btn_inserir: TBitBtn;
+    edt_idade: TEdit;
+    edt_sexo: TEdit;
+    edt_salario: TEdit;
+    Label3: TLabel;
+    Label4: TLabel;
+    Label5: TLabel;
+    adoquery_aux: TADOQuery;
+    btn_alterar: TButton;
+    btn_salvar: TButton;
+    btn_excluir: TButton;
+    procedure btm_fecharClick(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure btn_inserirClick(Sender: TObject);
+    procedure btn_alterarClick(Sender: TObject);
+    procedure btn_salvarClick(Sender: TObject);
+    procedure btn_excluirClick(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  Form_motoristas: TForm_motoristas;
+  cod_motorista : string;
+
+implementation
+
+uses Unit_Menu;
+
+{$R *.dfm}
+
+procedure TForm_motoristas.btm_fecharClick(Sender: TObject);
+begin
+  Close;
+end;
+
+procedure TForm_motoristas.FormShow(Sender: TObject);
+begin
+  adoquery_motoristas.Open;
+end;
+
+procedure TForm_motoristas.FormClose(Sender: TObject;
+  var Action: TCloseAction);
+begin
+  adoquery_motoristas.close;
+end;
+
+procedure TForm_motoristas.btn_inserirClick(Sender: TObject);
+begin
+  if (trim(edt_num.Text)='') or (trim(edt_nome.Text)='') or
+     (trim(edt_idade.Text)='') or (trim(edt_sexo.Text)='') or
+     (trim(edt_salario.Text)='') then
+   begin
+    Showmessage('Preencha todos os campos!');
+   end
+  else
+   begin
+    Form_menu.ConexaoBD.BeginTrans;
+    adoquery_aux.SQL.Text:=' INSERT INTO MOTORISTAS VALUES(' +
+                            edt_num.Text + ',' + QuotedStr(edt_nome.Text) + ',' +
+                            edt_idade.Text + ',' + QuotedStr(edt_sexo.Text) + ',' +
+                            edt_salario.Text + ')';
+    adoquery_aux.ExecSQL;
+    Form_menu.ConexaoBD.CommitTrans;
+    ADOQuery_motoristas.Close;
+    ADOQuery_motoristas.Open;
+    Showmessage('Operação executada com sucesso !');
+    edt_num.Clear;
+    edt_nome.Clear;
+    edt_idade.Clear;
+    edt_sexo.Clear;
+    edt_salario.Clear;
+   end;
+end;
+
+procedure TForm_motoristas.btn_alterarClick(Sender: TObject);
+begin
+  cod_motorista := dbgrid_motoristas.Columns.Items[0].field.text;
+  edt_num.Text:= cod_motorista;
+  edt_nome.Text:= dbgrid_motoristas.Columns.Items[1].field.text;
+  edt_idade.Text:= dbgrid_motoristas.Columns.Items[2].field.text;
+  edt_sexo.Text:= dbgrid_motoristas.Columns.Items[3].field.text;
+  edt_salario.Text:= dbgrid_motoristas.Columns.Items[4].field.text;
+end;
+
+
+
+procedure TForm_motoristas.btn_salvarClick(Sender: TObject);
+begin
+ Form_menu.ConexaoBD.BeginTrans;
+
+adoquery_aux.SQL.Text :=' UPDATE MOTORISTAS SET ' +
+					              ' COD_MOTORISTA = ' + edt_num.Text + ',' +
+				          		  ' NOME = ' + QuotedStr(edt_nome.Text) + ',' +
+								        ' IDADE = ' + edt_idade.Text + ',' +
+							       	  ' SEXO = ' + QuotedStr(edt_sexo.Text) + ',' +
+								        ' SALARIO  = ' + edt_salario.Text +
+				            	  ' WHERE cod_motorista = ' + cod_motorista;
+adoquery_aux.ExecSQL;
+Form_menu.ConexaoBD.CommitTrans;
+ADOQuery_motoristas.Close;
+ADOQuery_motoristas.Open;
+showmessage('Informações atualizadas com sucesso !');
+edt_num.Clear;
+edt_nome.Clear;
+edt_idade.Clear;
+edt_sexo.Clear;
+edt_salario.Clear;
+end;
+
+procedure TForm_motoristas.btn_excluirClick(Sender: TObject);
+begin
+  cod_motorista:= adoquery_motoristas.fieldbyname('cod_motorista').AsString;
+  Form_menu.ConexaoBD.BeginTrans;
+  adoquery_aux.SQL.Text:=' DELETE FROM MOTORISTAS ' +
+                         ' WHERE COD_MOTORISTA = ' + cod_motorista;
+  adoquery_aux.ExecSQL;
+  Form_menu.ConexaoBD.CommitTrans;
+  adoquery_motoristas.Close;
+  adoquery_motoristas.Open;
+  showmessage('Motorista excluída com sucesso !');
+end;
+
+end.
