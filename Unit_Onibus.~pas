@@ -179,7 +179,7 @@ procedure TForm_onibus.btn_excluirClick(Sender: TObject);
 begin
   cod_onibus:= adoquery_onibus.fieldbyname('onibus').AsString;
   Form_menu.ConexaoBD.BeginTrans;
-  adoquery_aux.SQL.Text:=' DELETE FORM ONIBUS ' +
+  adoquery_aux.SQL.Text:=' DELETE FROM ONIBUS ' +
                          ' WHERE COD_ONIBUS = ' + cod_onibus;
   adoquery_aux.ExecSQL;
   Form_menu.ConexaoBD.CommitTrans;

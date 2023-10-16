@@ -73,7 +73,7 @@ end;
 function TForm_Menu.ErroBD(msg, texto: string): string;
 var
   i, tam_msg, tam_texto : integer;
-  pedaco ; string;
+  pedaco : string;
 begin
 
   tam_msg := length(msg);

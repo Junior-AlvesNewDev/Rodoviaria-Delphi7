@@ -43,6 +43,7 @@ type
 var
   Form_motoristas: TForm_motoristas;
   cod_motorista : string;
+  deu_erro : boolean;
 
 implementation
 
@@ -81,16 +82,36 @@ begin
                             edt_num.Text + ',' + QuotedStr(edt_nome.Text) + ',' +
                             edt_idade.Text + ',' + QuotedStr(edt_sexo.Text) + ',' +
                             edt_salario.Text + ')';
+    try
     adoquery_aux.ExecSQL;
-    Form_menu.ConexaoBD.CommitTrans;
-    ADOQuery_motoristas.Close;
-    ADOQuery_motoristas.Open;
-    Showmessage('Operação executada com sucesso !');
-    edt_num.Clear;
-    edt_nome.Clear;
-    edt_idade.Clear;
-    edt_sexo.Clear;
-    edt_salario.Clear;
+    deu_erro := false;
+    except
+      on E : Exception do
+      begin
+        deu_erro := true;
+        if Form_menu.ErroBD(E.Message, 'PK_Motoristas') = 'Sim' then
+         Showmessage('Codigo já cadastro!')
+        else
+          Showmessage('Ocorreu o seguinte erro: ' + E.Message)
+      end;
+    end;
+
+    if deu_erro = false then
+      begin
+        Form_menu.ConexaoBD.CommitTrans;
+        ADOQuery_motoristas.Close;
+        ADOQuery_motoristas.Open;
+        Showmessage('Operação executada com sucesso !');
+        edt_num.Clear;
+        edt_nome.Clear;
+        edt_idade.Clear;
+        edt_sexo.Clear;
+        edt_salario.Clear;
+      end
+    else
+     begin
+       Form_menu.ConexaoBD.RollbackTrans;
+     end;
    end;
 end;
 
@@ -108,25 +129,46 @@ end;
 
 procedure TForm_motoristas.btn_salvarClick(Sender: TObject);
 begin
- Form_menu.ConexaoBD.BeginTrans;
+  Form_menu.ConexaoBD.BeginTrans;
 
-adoquery_aux.SQL.Text :=' UPDATE MOTORISTAS SET ' +
-					              ' COD_MOTORISTA = ' + edt_num.Text + ',' +
-				          		  ' NOME = ' + QuotedStr(edt_nome.Text) + ',' +
-								        ' IDADE = ' + edt_idade.Text + ',' +
-							       	  ' SEXO = ' + QuotedStr(edt_sexo.Text) + ',' +
-								        ' SALARIO  = ' + edt_salario.Text +
-				            	  ' WHERE cod_motorista = ' + cod_motorista;
-adoquery_aux.ExecSQL;
-Form_menu.ConexaoBD.CommitTrans;
-ADOQuery_motoristas.Close;
-ADOQuery_motoristas.Open;
-showmessage('Informações atualizadas com sucesso !');
-edt_num.Clear;
-edt_nome.Clear;
-edt_idade.Clear;
-edt_sexo.Clear;
-edt_salario.Clear;
+  adoquery_aux.SQL.Text :=' UPDATE MOTORISTAS SET ' +
+					                ' COD_MOTORISTA = ' + edt_num.Text + ',' +
+				          		    ' NOME = ' + QuotedStr(edt_nome.Text) + ',' +
+								          ' IDADE = ' + edt_idade.Text + ',' +
+							       	    ' SEXO = ' + QuotedStr(edt_sexo.Text) + ',' +
+								          ' SALARIO  = ' + edt_salario.Text +
+				            	    ' WHERE cod_motorista = ' + cod_motorista;
+  try
+    adoquery_aux.ExecSQL;
+    deu_erro := false;
+  except
+    on E : Exception do
+    begin
+      deu_erro := true;
+      if Form_menu.ErroBD(E.Message, 'FK_Onibus_Motoristas')  = 'Sim' then
+        Showmessage('Impossível atualizar o código pois existem Ônibus ligados a esta Motorista!')
+      else if Form_menu.ErroBD(E.Message, 'PK_Motoristas') = 'Sim' then
+        ShowMessage('Código já cadastrado!')
+      else
+        ShowMessage('Ocorreu o seguinte erro: ' + E.message);
+      end;
+    end;
+    if deu_erro = false then
+    begin
+      Form_menu.ConexaoBD.CommitTrans;
+      ADOQuery_motoristas.Close;
+      ADOQuery_motoristas.Open;
+      showmessage('Informações atualizadas com sucesso !');
+      edt_num.Clear;
+      edt_nome.Clear;
+      edt_idade.Clear;
+      edt_sexo.Clear;
+      edt_salario.Clear;
+    end
+   else
+    begin
+      Form_menu.ConexaoBD.RollbackTrans;
+    end;
 end;
 
 procedure TForm_motoristas.btn_excluirClick(Sender: TObject);

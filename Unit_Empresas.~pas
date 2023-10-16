@@ -79,7 +79,7 @@ begin
      begin
        deu_erro := true;
        if Form_menu.ErroBD(E.message, 'PK_Empresas') = 'Sim' then
-         Showmessage('Codigo já cadastrado!');
+         Showmessage('Codigo já cadastrado!')
        else
          Showmessage('Ocorreu o seguinte erro: ' + E.Message);
        end;
@@ -113,31 +113,71 @@ procedure Tform_empresas.btn_salvarClick(Sender: TObject);
 begin
   Form_menu.ConexaoBD.BeginTrans;
 
-adoquery_aux.SQL.Text :=' UPDATE EMPRESAS SET ' +
+  adoquery_aux.SQL.Text :=' UPDATE EMPRESAS SET ' +
 					              ' COD_EMPRESA = ' + edt_cod.Text + ',' +
 				          		  ' NOME = ' + QuotedStr(edt_nome.Text) +
 				            		' WHERE COD_EMPRESA = ' + cod_empresa;
+  try
+    adoquery_aux.ExecSQL;
+    deu_erro := false;
+  except
+    on E : Exception do
+    begin
+      deu_erro := true;
+      if Form_menu.ErroBD(E.message, 'FK_Onibus_Empresas') = 'Sim' then
+        Showmessage('Impossível atualizar o código pois existem Ônibus ligados a esta Empresa!')
+      else if Form_menu.ErroBD(E.message, 'PK_Empresas') = 'Sim' then
+        ShowMessage('Código já cadastrado!')
+      else
+        ShowMessage('Ocorreu o seguinte erro: ' + E.message);
+    end;
+  end;
+  if deu_erro = false then
+  begin
+    Form_menu.ConexaoBD.CommitTrans;
+    ADOQuery_Empresas.Close;
+    ADOQuery_Empresas.Open;
+    showmessage('Informações atualizadas com sucesso !');
+    edt_cod.Clear;
+    edt_nome.Clear;
+   end
+  else
+   begin
+     Form_menu.ConexaoBD.RollbackTrans;
+   end;
+end;   
 
-adoquery_aux.ExecSQL;
-Form_menu.ConexaoBD.CommitTrans;
-ADOQuery_Empresas.Close;
-ADOQuery_Empresas.Open; 
-showmessage('Informações atualizadas com sucesso !');
-edt_cod.Clear;
-edt_nome.Clear;
-end;
-
-procedure Tform_empresas.btn_excluirClick(Sender: TObject);
+procedure TForm_empresas.btn_excluirClick(Sender: TObject);
 begin
   cod_empresa:= adoquery_empresas.fieldbyname('cod_empresa').AsString;
   Form_menu.ConexaoBD.BeginTrans;
   adoquery_aux.SQL.Text:=' DELETE FROM EMPRESAS ' +
                          ' WHERE COD_EMPRESA = ' + cod_empresa;
-  adoquery_aux.ExecSQL;
-  Form_menu.ConexaoBD.CommitTrans;
-  adoquery_empresas.Close;
-  adoquery_empresas.Open;
-  showmessage('Empresa excluída com sucesso !');
+  deu_erro := false;
+  try
+    adoquery_aux.ExecSQL;
+  except
+    on E: Exception do
+    begin
+      deu_erro := true;
+      if Form_menu.ErroBD(E.Message, 'FK_Onibus_Empresa') = 'Sim' then
+        showmessage('Impossivel excluir pois existem Ônibus a esta Empresa!')
+      else
+        showmessage('Ocorreu o seguinte erro: ' + E.Message);
+    end;
+end;
+
+  if deu_erro = true then
+    Form_menu.ConexaoBD.RollbackTrans
+  else
+   begin
+    Form_menu.ConexaoBD.CommitTrans;
+    adoquery_empresas.Close;
+    adoquery_empresas.Open;
+    showmessage('Empresa excluída com sucesso !');
+   end;
 end;
 
 end.
+
+

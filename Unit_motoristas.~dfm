@@ -153,12 +153,7 @@ object Form_motoristas: TForm_motoristas
     Connection = Form_Menu.ConexaoBD
     Parameters = <>
     SQL.Strings = (
-      'SELECT COD_MOTORISTA AS Codigo,'
-      '       NOME AS Nome,'
-      #9'IDADE AS Idade,'
-      #9'SEXO AS Sexo,'
-      #9'SALARIO AS Sal'#225'rio'
-      'FROM MOTORISTAS'
+      'SELECT * FROM MOTORISTAS'
       'ORDER BY NOME')
     Left = 8
     Top = 320
