@@ -44,6 +44,7 @@ var
   Form_onibus: TForm_onibus;
   num_motorista, cod_empresa : integer;
   cod_onibus : string;
+  deu_erro : boolean;
 
 implementation
 
@@ -131,17 +132,35 @@ begin
     adoquery_aux.SQL.Text:='INSERT INTO ONIBUS VALUES('+
                            edt_num.Text + ',' + intToStr(cod_empresa) + ',' +
                            IntToStr(num_motorista) + ',' + QuotedStr(edt_trajeto.Text) + ')';
-    adoquery_aux.ExecSQL;
-    Form_menu.ConexaoBD.commitTrans;
-    ADOQuery_onibus.Close;
-    ADOQuery_onibus.Open;
-    Showmessage('Operação executada com sucesso !');
-    edt_num.Clear;
-    edt_trajeto.Clear;
-    cb_motorista.ItemIndex := -1;
-    cb_empresa.ItemIndex := -1;
-
+    try
+      adoquery_aux.ExecSQL;
+      deu_erro := false;
+    except
+      on E: Exception do
+      begin
+        deu_erro := true;
+        if Form_menu.ErroBD(E.Message, 'PK_Onibus') = 'Sim' then
+          ShowMessage('Código já cadastrado!')
+        else
+          ShowMessage('Ocorreu o seguinte erro' + E.Message);
+      end;
   end;
+    if deu_erro = false then
+     begin
+      Form_menu.ConexaoBD.commitTrans;
+      ADOQuery_onibus.Close;
+      ADOQuery_onibus.Open;
+      Showmessage('Operação executada com sucesso !');
+      edt_num.Clear;
+      edt_trajeto.Clear;
+      cb_motorista.ItemIndex := -1;
+      cb_empresa.ItemIndex := -1;
+     end
+   else
+    begin
+     Form_menu.ConexaoBD.RollbackTrans;
+    end;
+end;
 end;
 
 procedure TForm_onibus.btn_alterarClick(Sender: TObject);
@@ -164,15 +183,37 @@ begin
                          ' COD_MOTORISTA = ' + inttostr(num_motorista) + ',' +
                          ' TRAJETO = ' + QuotedStr(edt_trajeto.Text) +
                          ' WHERE COD_ONIBUS = ' + cod_onibus;
-  adoquery_aux.ExecSQL;
-  Form_menu.ConexaoBD.CommitTrans;
-  ADOQuery_onibus.Close;
-  ADOQuery_onibus.Open;
-  showmessage('Informações atualizadas com sucesso !');
-  edt_num.Clear;
-  edt_trajeto.Clear;
-  cb_motorista.ItemIndex := -1;
-  cb_empresa.ItemIndex := -1;
+  try
+    adoquery_aux.ExecSQL;
+    deu_erro := false;
+  except
+    on E : Exception do
+    begin
+     deu_erro := true;
+     if Form_menu.ErroBD(E.Message, 'FK_Onibus_Empresa') = 'Sim' then
+       ShowMessage('Impossível atualizar o código pois existem Empresas ligados a este trajeto!')
+     else if Form_menu.ErroBD(E.Message, 'PK__Onibus__19B9E860E1C5BA3C') = 'Sim' then
+       ShowMessage('Código já cadastrado!')
+     else
+       ShowMessage('Ocorreu o seguinte erro: ' + E.Message);
+     end;
+  end;
+
+  if deu_erro = false then
+  begin
+    Form_menu.ConexaoBD.CommitTrans;
+    ADOQuery_onibus.Close;
+    ADOQuery_onibus.Open;
+    showmessage('Informações atualizadas com sucesso !');
+    edt_num.Clear;
+    edt_trajeto.Clear;
+    cb_motorista.ItemIndex := -1;
+    cb_empresa.ItemIndex := -1;
+  end
+ else
+   begin
+     Form_menu.ConexaoBD.RollbackTrans;
+   end;
 end;
 
 procedure TForm_onibus.btn_excluirClick(Sender: TObject);
@@ -181,11 +222,33 @@ begin
   Form_menu.ConexaoBD.BeginTrans;
   adoquery_aux.SQL.Text:=' DELETE FROM ONIBUS ' +
                          ' WHERE COD_ONIBUS = ' + cod_onibus;
-  adoquery_aux.ExecSQL;
-  Form_menu.ConexaoBD.CommitTrans;
-  adoquery_onibus.Close;
-  adoquery_onibus.Open;
-  showmessage('Onibus excluída com sucesso !');
+  deu_erro := false;
+  try
+    adoquery_aux.ExecSQL;
+  except
+    on E : Exception do
+    begin
+      deu_erro := true;
+      if Form_menu.ErroBD(E.Message, 'FK_Onibus_Empresa')  = 'Sim' then
+        ShowMessage('Impossível excluir pois existem ônibus ligados a esta empresa!')
+      else
+        ShowMessage('Ocorreu o seguinte erro: ' + E.Message);
+      end;
+    end;
+
+  if deu_erro = true then
+    Form_menu.ConexaoBD.RollbackTrans
+  else
+   Begin
+    Form_menu.ConexaoBD.CommitTrans;
+    adoquery_onibus.Close;
+    adoquery_onibus.Open;
+    showmessage('Onibus excluída com sucesso !');
+    edt_num.Clear;
+    edt_trajeto.Clear;
+    cb_motorista.ItemIndex := -1;
+    cb_empresa.ItemIndex := -1;
+   end; 
 end;
 
 end.
